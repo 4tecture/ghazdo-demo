@@ -1,0 +1,72 @@
+name: Build and deploy app
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "Infrastructure/**"
+      - ".github/workflows/infrastructure.yml"
+      - ".github/workflows/multienvbuildanddeploy.yml"
+      - ".github/workflows/issuehelpwanted.yml"
+      - ".github/workflows/stale.yml"
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: 4thelloworlddemo
+  DOTNET_VERSION: '6.0.x'
+  ARTIFACT_NAME: 'webapp'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Build
+    steps:
+
+      - uses: actions/checkout@master
+      
+      - name: Setup .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }} 
+      
+      - name: dotnet build and publish
+        run: |
+          dotnet build ${{ github.workspace }}/HelloWorld/HelloWorld/HelloWorld.csproj --configuration Release
+          dotnet publish ${{ github.workspace }}/HelloWorld/HelloWorld/HelloWorld.csproj -c Release -o '${{ runner.temp }}/${{ env.ARTIFACT_NAME }}'
+
+      - name: Publish Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: webapp
+          path: '${{ runner.temp }}/${{ env.ARTIFACT_NAME }}'
+    
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy to Production
+    needs: [build]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: webapp
+          path: '${{ runner.temp }}/${{ env.ARTIFACT_NAME }}'
+
+      - name: Login for az cli commands 
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: 'Run Azure webapp deploy action'
+        uses: azure/webapps-deploy@v2
+        with: 
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}-webapp 
+          package: '${{ runner.temp }}/${{ env.ARTIFACT_NAME }}'
+          slot-name: staging
+
+      - name: Swap to production slot
+        run: |
+          az webapp deployment slot swap --resource-group ${{ secrets.AZURE_RG }} --name ${{ env.AZURE_WEBAPP_NAME }}-webapp --slot staging --target-slot production
+          echo "Swap finished. App Service Application URL: https://$(az webapp show --resource-group ${{ secrets.AZURE_RG }} --name ${{ env.AZURE_WEBAPP_NAME }}-webapp --query hostNames[0] -o tsv)"
+
