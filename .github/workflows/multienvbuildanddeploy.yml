@@ -29,7 +29,7 @@ jobs:
       - uses: actions/checkout@master
       
       - name: Setup .NET Core
-        uses: actions/setup-dotnet@v1
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }} 
       
@@ -80,7 +80,7 @@ jobs:
         run: |
           $webAppUrl = az webapp deployment slot list --resource-group ${{ secrets.AZURE_RG }} --name ${{ env.AZURE_WEBAPP_NAME }}-webapp --query "[?name=='pr-${{github.event.number}}'].{hostNames:hostNames[0]}" -o tsv
           Write-Output "The webapp URL is https://$($webAppUrl)"
-          Write-Output "::set-output name=webAppUrl::https://$($webAppUrl)"
+          "webAppUrl=https://$($webAppUrl)" >> $env:GITHUB_OUTPUT
 
       - name: 'Run Azure webapp deploy action'
         uses: azure/webapps-deploy@v2
@@ -120,8 +120,7 @@ jobs:
         run: |
           $webAppUrl = az webapp deployment slot list --resource-group ${{ secrets.AZURE_RG }} --name ${{ env.AZURE_WEBAPP_NAME }}-webapp --query "[?name=='testing'].{hostNames:hostNames[0]}" -o tsv
           Write-Output "The webapp URL is https://$($webAppUrl)"
-          Write-Output "::set-output name=webAppUrl::https://$($webAppUrl)"
-
+          "webAppUrl=https://$($webAppUrl)" >> $env:GITHUB_OUTPUT
       - name: 'Run Azure webapp deploy action'
         uses: azure/webapps-deploy@v2
         with: 
@@ -172,7 +171,7 @@ jobs:
         run: |
           $webAppUrl = az webapp show --resource-group ${{ secrets.AZURE_RG }} --name ${{ env.AZURE_WEBAPP_NAME }}-webapp --query hostNames[0] -o tsv
           Write-Output "Swap finished. App Service Application URL: https://$($webAppUrl)"
-          Write-Output "::set-output name=webAppUrl::https://$($webAppUrl)"
+          "webAppUrl=https://$($webAppUrl)" >> $env:GITHUB_OUTPUT
           
   cleanup-pull-request:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
