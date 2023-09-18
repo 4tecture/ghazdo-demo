@@ -1,0 +1,23 @@
+trigger:
+- main
+
+schedules:
+- cron: "0 0 * * *"
+  displayName: 'Nightly build'
+  branches:
+    include:
+    - master
+  always: true
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- task: AdvancedSecurity-Codeql-Init@1
+  inputs:
+    languages: 'csharp'
+    querysuite: 'security-extended'
+- task: AdvancedSecurity-Codeql-Autobuild@1
+- task: AdvancedSecurity-Dependency-Scanning@1
+- task: AdvancedSecurity-Codeql-Analyze@1
+- task: AdvancedSecurity-Publish@1
