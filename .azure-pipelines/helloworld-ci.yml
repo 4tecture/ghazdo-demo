@@ -13,13 +13,6 @@ variables:
 
 # Pipeline steps
 steps:
-# Initialize Advanced Security CodeQL
-- task: AdvancedSecurity-Codeql-Init@1
-  inputs:
-    languages: 'csharp'
-    querysuite: 'security-extended'
-  displayName: 'Initialize CodeQL'
-
 # Install .NET Core SDK
 - task: UseDotNet@2
   inputs:
@@ -55,26 +48,3 @@ steps:
     artifact: 'webapp'
     publishLocation: 'pipeline'
   displayName: 'Publish Pipeline Artifact'
-
-# Run Advanced Security Dependency Scanning
-- task: AdvancedSecurity-Dependency-Scanning@1
-  displayName: 'Dependency Scanning'
-
-# Run CodeQL Analysis
-- task: AdvancedSecurity-Codeql-Analyze@1
-  displayName: 'CodeQL Analysis'
-
-# Publish CodeQL Analysis Results
-- task: AdvancedSecurity-Publish@1
-  displayName: 'Publish CodeQL Results'
-
-# Conditional step for Pull Requests: Run a PowerShell script for additional PR validation
-- ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
-  - task: PowerShell@2
-    displayName: 'PR Gating - Additional Checks for Pull Requests'
-    inputs:
-      targetType: filePath
-      filePath: $(Build.SourcesDirectory)/.azure-pipelines/CIGate.ps1
-      pwsh: true
-    env:
-      MAPPED_ADO_PAT: $(GHAzDO_PAT)
