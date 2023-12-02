@@ -22,7 +22,7 @@ Perform the following action to setup resource groups and secrets fo the GitHub 
 
   ```powershell
   git remote set-url origin <URL of your new repository>
-  git push -u origin starter-solution
+  git push -u origin main
   ```
 
 ### Analyse the solution
