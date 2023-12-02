@@ -6,7 +6,7 @@ pool:
 
 variables:
   buildConfiguration: 'Release'
-  workingDirectory: 'HelloWorld' # Define working directory variable
+  workingDirectory: '$(Build.SourcesDirectory)/HelloWorld'
 
 steps:
 - task: AdvancedSecurity-Codeql-Init@1
@@ -22,21 +22,17 @@ steps:
 
 - script: dotnet restore $(workingDirectory)/HelloWorld.sln
   displayName: 'Restore dependencies'
-  workingDirectory: $(workingDirectory)
 
 - script: dotnet build $(workingDirectory)/HelloWorld.sln --configuration $(buildConfiguration) --no-restore
   displayName: 'Build solution'
-  workingDirectory: $(workingDirectory)
 
 # Running unit tests
 - script: dotnet test $(workingDirectory)/HelloWorld.sln --configuration $(buildConfiguration) --no-build --logger trx
   displayName: 'Run unit tests'
-  workingDirectory: $(workingDirectory)
 
 # Publish the web app
 - script: dotnet publish $(workingDirectory)/HelloWorld/HelloWorld.csproj --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)
   displayName: 'Publish web app'
-  workingDirectory: $(workingDirectory)
 
 # Publish the build artifacts
 - task: PublishBuildArtifacts@1
